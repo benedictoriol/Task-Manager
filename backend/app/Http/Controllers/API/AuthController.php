@@ -58,8 +58,8 @@ class AuthController extends Controller
             );
         }
 
-        //Validate
-        if(!Auth::attempt($request->all(),true)){
+        //Validate credentials - FIXED: use only email and password
+        if(!Auth::attempt($request->only(['email', 'password']))){
             return response()->json(
                 data: [
                     "status" => false,
@@ -72,16 +72,29 @@ class AuthController extends Controller
         //Get user info and generate token
         $user = Auth::user();
 
-        $token = $user->createToken($user)->plainTextToken;
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json(
                 data: [
-                    "status" => false,
+                    "status" => true, // ✅ FIXED: Changed from false to true
                     "token" => $token,
                     "data" => $user
                 ],
                 status: Response::HTTP_OK
             );
     }
-    
+
+    // Add logout method
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(
+            data: [
+                "status" => true,
+                "message" => "Logged out successfully"
+            ],
+            status: Response::HTTP_OK
+        );
+    }
 }
